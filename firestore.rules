@@ -1,0 +1,48 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Usersコレクション
+    match /users/{userId} {
+      allow read: if request.auth.uid != null;
+      allow write: if request.auth.uid == userId;
+    }
+
+    // Roomsコレクション
+    match /rooms/{roomId} {
+      allow read: if request.auth.uid != null && request.auth.uid in resource.data.members;
+      allow create: if request.auth.uid != null && request.auth.uid == request.resource.data.createdBy;
+      allow update: if request.auth.uid != null && request.auth.uid in resource.data.members;
+    }
+
+    // DirectRoomsコレクション
+    match /directRooms/{roomId} {
+      allow read, create, update: if request.auth.uid != null && (request.auth.uid == resource.data.user1 || request.auth.uid == resource.data.user2);
+    }
+
+    // Messagesコレクション
+    match /messages/{messageId} {
+      allow read: if request.auth.uid != null && (
+        request.auth.uid in get(/databases/$(database)/documents/rooms/$(request.resource.data.roomId)).data.members || 
+        request.auth.uid == get(/databases/$(database)/documents/directRooms/$(request.resource.data.roomId)).data.user1 ||
+        request.auth.uid == get(/databases/$(database)/documents/directRooms/$(request.resource.data.roomId)).data.user2
+      );
+      allow create: if request.auth.uid != null && request.auth.uid == request.resource.data.userId;
+    }
+
+    match /messages/{messageId} {
+      allow read: if request.auth.uid != null && request.auth.uid in get(/databases/$(database)/documents/rooms/$(request.resource.data.roomId)).data.members;
+      allow create: if request.auth.uid != null && request.auth.uid == request.resource.data.userId && request.auth.uid not in get(/databases/$(database)/documents/users/$(request.resource.data.userId)).data.blockedUsers;
+      allow update: if request.auth.uid != null && request.auth.uid == resource.data.userId;
+      allow delete: if request.auth.uid != null && request.auth.uid == resource.data.userId;
+    }
+
+    match /userReads/{userId} {
+      // 自分のドキュメントのみ読み取りと更新ができる
+      allow read, update: if request.auth != null && request.auth.uid == userId;
+
+      // 新しいドキュメントの作成と削除を許可しない
+      allow create, delete: if false;
+    }
+    
+  }
+}

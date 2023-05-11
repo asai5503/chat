@@ -1,0 +1,61 @@
+users:
+  userId: string(documentId)
+  name: string
+  iconUrl: string
+  friends: [string] #userId
+  rooms: [string] #directRoomId or roomId
+  blockedUser: [string] #userId
+  createdAt: timestamp
+  updatedAt: timestamp
+
+directRooms:
+  directRoomId: string(documentId)
+  user1: string
+  user2: string
+  createdAt: timestamp
+  updatedAt: timestamp
+
+rooms:
+  roomId: string(documentId)
+  name: string
+  iconUrl: string
+  members: [string] #userId 参加しているメンバー
+  createdAt: timestamp
+  updatedAt: timestamp
+  
+messages:
+  messageId: string(documentId)
+  roomId: string #directRoomId or roomId
+  sendDate: timestamp
+  senderId: string #userId
+  content: string #text
+  imageUrl: reference #imageUrl
+  likes: [string] #userId いいねしたメンバー
+  createdAt: timestamp
+  updatedAt: timestamp
+
+#未読メッセージの管理
+userReads:
+  userReadId: string(documentId)
+  userId: string
+  roomId: string
+  lastReadMessageId: string
+  createdAt: timestamp
+  updatedAt: timestamp
+
+
+チャットルーム作成画面
+
+--bk
+users:
+  userId: string(documentId)
+  name: string
+  iconUrl: string
+  createdAt: timestamp
+  updatedAt: timestamp
+
+  friends:
+    friendId: string(documentId)
+    active: boolean(true:active false:block)
+    createdAt: timestamp
+    updatedAt: timestamp
