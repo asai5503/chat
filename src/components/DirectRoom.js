@@ -15,7 +15,11 @@ import {
   arrayUnion,
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import Linkify from "react-linkify";
+
+import DirectRoomHeader from "./DirectRoomHeader";
+import DirectRoomDropArea from "./DirectRoomDropArea";
+import DirectRoomMessageList from "./DirectRoomMessageList";
+import DirectRoomMessageForm from "./DirectRoomMessageForm";
 
 const DirectRoom = ({ roomId }) => {
   const [messages, setMessages] = useState([]);
@@ -179,74 +183,26 @@ const DirectRoom = ({ roomId }) => {
     <div>
       {currentUser ? (
         <div>
-          <h1>Direct Room: {roomId}</h1>
-          <div
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            style={{
-              padding: "20px",
-              border: `2px dashed ${dragging ? "green" : "gray"}`,
-              margin: "20px",
-            }}
-          >
-            Drag and drop an image here or click to select an image.
-          </div>
-          <div>
-            {messages.map((message) => {
-              const isLiked = message.likes.includes(currentUser.uid);
-              return (
-                <div key={message.id}>
-                  {message.senderId}: <Linkify>{message.content || ""}</Linkify>{" "}
-                  {message.image && (
-                    <img src={message.image} alt="message" width="100" />
-                  )}
-                  <span>Likes: {message.likes.length}</span>
-                  <button onClick={() => handleLikeClick(message.id, isLiked)}>
-                    {isLiked ? "Unlike" : "Like"}
-                  </button>
-                  {currentUser.uid === message.senderId && (
-                    <>
-                      <button
-                        onClick={() =>
-                          handleEditClick(message.id, message.content)
-                        }
-                      >
-                        Edit
-                      </button>
-                    </>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (editingMessageId) {
-                handleMessageUpdate(editingMessageId);
-              } else {
-                handleNewMessageSubmit(e);
-              }
-            }}
-          >
-            <input
-              type="text"
-              placeholder="Enter a new message"
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-            />
-            <input type="file" onChange={handleFileInputChange} />
-            {fileUrl && (
-              <img src={fileUrl} alt="uploaded file preview" width="100" />
-            )}
-            <button type="submit">
-              {editingMessageId ? "Update" : "Send"}
-            </button>
-          </form>
+          <DirectRoomHeader roomId={roomId} />
+          <DirectRoomDropArea
+            dragging={dragging}
+            handleDragOver={handleDragOver}
+            handleDragLeave={handleDragLeave}
+            handleDrop={handleDrop}
+          />
+          <DirectRoomMessageList
+            messages={messages}
+            currentUser={currentUser}
+            handleLikeClick={handleLikeClick}
+            handleEditClick={handleEditClick}
+          />
+          <DirectRoomMessageForm
+            newMessage={newMessage}
+            fileUrl={fileUrl}
+            handleNewMessageSubmit={handleNewMessageSubmit}
+            handleFileInputChange={handleFileInputChange}
+            handleMessageUpdate={handleMessageUpdate}
+          />
         </div>
       ) : (
         <p>ログインしてください</p>
