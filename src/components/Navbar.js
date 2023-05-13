@@ -12,6 +12,7 @@ const Navbar = () => {
       <Link to="/chatlist">チャットリスト</Link>
       <Link to="/rooms">ルーム</Link>
       <Link to="/directroom">ダイレクトルーム</Link>
+      <Link to="/profile">プロフィール</Link>
     </nav>
   )
 }

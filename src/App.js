@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "./firebase";
+import { auth,db } from "./firebase";
 import "./App.css";
 import {
   BrowserRouter as Router,
@@ -8,6 +8,7 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
+import { getDoc, doc } from "firebase/firestore";
 import DirectRoom from "./components/DirectRoom";
 import Rooms from "./components/Rooms";
 import ChatList from "./components/ChatList";
@@ -17,14 +18,20 @@ import Home from "./components/Home";
 import Navbar from "./components/Navbar";
 import SignUp from "./components/SignUp";
 import { AuthProvider } from "./contexts/AuthContext";
+import Profile from "./components/Profile";
 
 function App() {
   const [user, setUser] = useState(null);
+  const [userInfo, setUserInfo] = useState(null);
   const [loading, setLoading] = useState(true);
-
+  
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
+      if (currentUser) {
+        const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+        setUserInfo(userDoc.data());
+      }
       setLoading(false);
     });
 
@@ -40,6 +47,14 @@ function App() {
   return (
     <Router>
       <Navbar />
+      {user ? (
+        <div>
+          <p>ユーザID: {user.uid}</p>
+          <p>ユーザ名: {userInfo?.name}</p>
+        </div>
+      ) : (
+        <p>ログインしてください</p>
+      )}
       <Routes>
         <Route path="/" element={<Home />}></Route>
         <Route path="/signup" element={<SignUp />}></Route>
@@ -59,15 +74,8 @@ function App() {
             )
           }
         ></Route>
+        <Route path="/profile" element={<Profile/>}></Route>
       </Routes>
-      {user ? (
-        <div>
-          <p>ユーザID: {user.uid}</p>
-          <p>ユーザ名: {user.displayName}</p>
-        </div>
-      ) : (
-        <p>ログインしてください</p>
-      )}
     </Router>
   );
 }
