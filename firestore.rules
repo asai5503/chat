@@ -1,48 +1,73 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Usersコレクション
-    match /users/{userId} {
-      allow read: if request.auth.uid != null;
-      allow write: if request.auth.uid == userId;
+
+    match /{document=**} {
+      allow read, write: if
+          request.time < timestamp.date(2030, 5, 16);
     }
 
-    // Roomsコレクション
-    match /rooms/{roomId} {
-      allow read: if request.auth.uid != null && request.auth.uid in resource.data.members;
-      allow create: if request.auth.uid != null && request.auth.uid == request.resource.data.createdBy;
-      allow update: if request.auth.uid != null && request.auth.uid in resource.data.members;
+    // Usersコレクション
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+      allow create;
+
+      match /private {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
     }
 
     // DirectRoomsコレクション
     match /directRooms/{roomId} {
-      allow read, create, update: if request.auth.uid != null && (request.auth.uid == resource.data.user1 || request.auth.uid == resource.data.user2);
+      // ユーザがroomsのメンバーであることを確認
+      function isRoomMember() {
+        return request.auth.uid != null && (request.auth.uid == resource.data.user1 || request.auth.uid == resource.data.user2);
+      }
+
+      // ユーザが相手と友達であることを確認
+      function isFriendWithOther() {
+        let otherUserId = (request.auth.uid == resource.data.user1) ? resource.data.user2 : resource.data.user1;
+        return exists(/databases/$(database)/documents/users/$(request.auth.uid)/private/friends/$(otherUserId));
+      }
+
+      allow read, update, delete: if isRoomMember();
+      allow create: if request.auth.uid != null && isFriendWithOther();
+    }
+
+    // Roomsコレクション
+    match /rooms/{roomId} {
+      // ログインしているユーザが作成と読み取り可能
+      allow create,read: if request.auth != null;
+
+      // roomの更新、削除はroomに参加しているユーザのみ可能
+      allow update, delete: if request.auth != null && request.auth.uid in resource.data.members;
     }
 
     // Messagesコレクション
-    match /messages/{messageId} {
-      allow read: if request.auth.uid != null && (
-        request.auth.uid in get(/databases/$(database)/documents/rooms/$(request.resource.data.roomId)).data.members || 
-        request.auth.uid == get(/databases/$(database)/documents/directRooms/$(request.resource.data.roomId)).data.user1 ||
-        request.auth.uid == get(/databases/$(database)/documents/directRooms/$(request.resource.data.roomId)).data.user2
-      );
-      allow create: if request.auth.uid != null && request.auth.uid == request.resource.data.userId;
-    }
+    match /databases/{database}/documents {
+      function isSignedIn() {
+        return request.auth != null;
+      }
 
-    match /messages/{messageId} {
-      allow read: if request.auth.uid != null && request.auth.uid in get(/databases/$(database)/documents/rooms/$(request.resource.data.roomId)).data.members;
-      allow create: if request.auth.uid != null && request.auth.uid == request.resource.data.userId && request.auth.uid not in get(/databases/$(database)/documents/users/$(request.resource.data.userId)).data.blockedUsers;
-      allow update: if request.auth.uid != null && request.auth.uid == resource.data.userId;
-      allow delete: if request.auth.uid != null && request.auth.uid == resource.data.userId;
-    }
+      function isSender() {
+        return request.auth.uid == resource.data.senderId;
+      }
 
-    match /userReads/{userId} {
-      // 自分のドキュメントのみ読み取りと更新ができる
-      allow read, update: if request.auth != null && request.auth.uid == userId;
+      function isInRoom() {
+        return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.private.rooms.has(resource.data.roomId);
+      }
 
-      // 新しいドキュメントの作成と削除を許可しない
-      allow create, delete: if false;
+      match /messages/{messageId} {
+        // ユーザが参加しているdirectRoomIdまたはroomIdについてメッセージの作成が可能
+        allow create: if isSignedIn() && isInRoom();
+
+        // ユーザが参加しているdirectRoomIdまたはroomIdについてメッセージの読み取りが可能
+        allow read: if isSignedIn() && isInRoom();
+
+        // 更新、削除は自分のみ可能
+        allow update, delete: if isSignedIn() && isSender();
+      }
     }
-    
   }
 }

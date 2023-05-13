@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { auth } from "../firebase";
+import { auth, db } from "../firebase";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 
 const SignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const iconUrl = "";
 
   const navigate = useNavigate();
 
@@ -31,6 +33,20 @@ const SignUp = () => {
         password
       );
       await updateProfile(user, { displayName });
+
+      const newUser = {
+        name: displayName,
+        iconUrl,
+        private: {
+          friends: [],
+          rooms: [],
+          blockedUser: [],
+          unreadCounts: {},
+        },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      await setDoc(doc(db, "users", user.uid), newUser);
 
       setEmail("");
       setPassword("");

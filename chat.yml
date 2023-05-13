@@ -2,11 +2,20 @@ users:
   userId: string(documentId)
   name: string
   iconUrl: string
-  friends: [string] #userId
-  rooms: [string] #directRoomId or roomId
-  blockedUser: [string] #userId
+  private: {
+    friends: [string] #userId
+    rooms: [string] #directRoomId or roomId
+    blockedUser: [string] #userId
+    unreadCounts: {
+      [roomId: string] :number #roomId
+    }
+  }
   createdAt: timestamp
   updatedAt: timestamp
+
+#Authenticationで以下項目を管理
+#  email
+#  password
 
 directRooms:
   directRoomId: string(documentId)
@@ -35,13 +44,14 @@ messages:
   updatedAt: timestamp
 
 #未読メッセージの管理
-userReads:
-  userReadId: string(documentId)
-  userId: string
-  roomId: string
-  lastReadMessageId: string
-  createdAt: timestamp
-  updatedAt: timestamp
+#ユーザーごとに個別のドキュメントが作成され、メモリ使用量が増える可能性があるため破棄
+#userReads:
+#  userReadId: string(documentId)
+#  userId: string
+#  roomId: string
+#  lastReadMessageId: string
+#  createdAt: timestamp
+#  updatedAt: timestamp
 
 
 チャットルーム作成画面
