@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { auth, db } from "../firebase";
+import { auth, db, storage } from "../firebase";
 import {
   updateProfile,
   updateEmail,
@@ -8,14 +8,18 @@ import {
   EmailAuthProvider,
 } from "firebase/auth";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 const Profile = () => {
   const [displayName, setDisplayName] = useState("");
   const [iconUrl, setIconUrl] = useState("");
+  const [iconFile, setIconFile] = useState(null);
+  const [previewIconUrl, setPreviewIconUrl] = useState("");
   const [email, setEmail] = useState("");
   const [currentPasswordForEmail, setCurrentPasswordForEmail] = useState("");
   const [newEmail, setNewEmail] = useState("");
-  const [currentPasswordForPassword, setCurrentPasswordForPassword] = useState("");
+  const [currentPasswordForPassword, setCurrentPasswordForPassword] =
+    useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -31,17 +35,26 @@ const Profile = () => {
     const userDocRef = doc(db, "users", uid);
     const userDocData = await getDoc(userDocRef);
     setIconUrl(userDocData.data().iconUrl);
+    setPreviewIconUrl(userDocData.data().iconUrl);
   };
 
   const handleSubmitProfile = async (e) => {
     e.preventDefault();
     try {
+      let newIconUrl = iconUrl;
+      if (iconFile) {
+        newIconUrl = await handleIconUpload(iconFile);
+      }
+
       // Save the new display name and photo URL to Firebase Authentication.
-      await updateProfile(auth.currentUser, { displayName, photoURL: iconUrl });
+      await updateProfile(auth.currentUser, {
+        displayName,
+        photoURL: newIconUrl,
+      });
 
       // Also save the photo URL to Firestore.
       const userDocRef = doc(db, "users", auth.currentUser.uid);
-      await updateDoc(userDocRef, { name: displayName, iconUrl });
+      await updateDoc(userDocRef, { name: displayName, iconUrl: newIconUrl });
 
       console.log("Profile updated!");
 
@@ -105,6 +118,27 @@ const Profile = () => {
     }
   };
 
+  const handleIconFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setIconFile(file);
+
+      // Update the preview icon URL to reflect the new file.
+      setPreviewIconUrl(URL.createObjectURL(file));
+    }
+  };
+
+  const handleIconUpload = async (file) => {
+    try {
+      const fileRef = ref(storage, `icons/${file.name}`);
+      await uploadBytes(fileRef, file);
+      const url = await getDownloadURL(fileRef);
+      return url;
+    } catch (error) {
+      console.error("Error uploading icon:", error);
+    }
+  };
+
   return (
     <div>
       <form onSubmit={handleSubmitProfile}>
@@ -115,12 +149,14 @@ const Profile = () => {
           onChange={(e) => setDisplayName(e.target.value)}
           placeholder="Display Name"
         />
-        <input
-          type="text"
-          value={iconUrl}
-          onChange={(e) => setIconUrl(e.target.value)}
-          placeholder="Icon URL"
-        />
+        {previewIconUrl && (
+          <img
+            src={previewIconUrl}
+            alt="Icon Preview"
+            style={{ width: "100px", height: "100px", objectFit: "cover" }}
+          />
+        )}
+        <input type="file" onChange={handleIconFileChange} />
         <button type="submit">Save Profile</button>
       </form>
 
