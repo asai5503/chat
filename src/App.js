@@ -17,6 +17,7 @@ import SignOut from "./components/SignOut";
 import Home from "./components/Home";
 import Navbar from "./components/Navbar";
 import SignUp from "./components/SignUp";
+import AddFriend from "./components/AddFriend";
 import { AuthProvider } from "./contexts/AuthContext";
 import Profile from "./components/Profile";
 
@@ -60,8 +61,10 @@ function App() {
         <Route path="/signup" element={<SignUp />}></Route>
         <Route path="/signin" element={<SignIn user={user} />}></Route>
         <Route path="/signout" element={<SignOut />}></Route>
+        <Route path="/addfriend" element={<AddFriend />}></Route>
         <Route path="/rooms" element={<Rooms />}></Route>
-        <Route path="/chatlist" element={<ChatList />}></Route>
+        <Route path="/chatlist" element={<ChatList currentUser={user} />} />
+
         <Route
           path="/directroom/:roomId"
           element={
