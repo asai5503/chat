@@ -16,8 +16,9 @@ import {
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import Linkify from "react-linkify";
+import { useParams } from "react-router-dom"; 
 
-const DirectRoom = ({ roomId }) => {
+const DirectRoom = () => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [file, setFile] = useState(null);
@@ -25,6 +26,7 @@ const DirectRoom = ({ roomId }) => {
   const [dragging, setDragging] = useState(false);
   const { currentUser } = useAuth();
   const [editingMessageId, setEditingMessageId] = useState(null);
+  const { roomId } = useParams(); 
 
   useEffect(() => {
     if (currentUser) {
