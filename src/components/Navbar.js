@@ -9,6 +9,7 @@ const Navbar = () => {
       <Link to="/signup">サインアップ</Link>
       <Link to="/signin">サインイン</Link>
       <Link to="/signout">サインアウト</Link>
+      <Link to="/addfriend">フレンド追加</Link>
       <Link to="/chatlist">チャットリスト</Link>
       <Link to="/rooms">ルーム</Link>
       <Link to="/directroom">ダイレクトルーム</Link>
