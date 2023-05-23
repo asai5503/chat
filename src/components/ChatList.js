@@ -59,7 +59,6 @@ function ChatList({ currentUser }) {
               friendName: friendData.name,
               friendIconUrl: friendData.iconUrl,
               directRoomId,
-              unreadCount: userData.private.unreadCounts[friendId] || 0,
             };
           }
         })
@@ -177,7 +176,6 @@ function ChatList({ currentUser }) {
           friendName: friendData.name,
           friendIconUrl: friendData.iconUrl,
           directRoomId: docRef.id,
-          unreadCount: 0,
         };
 
         // Update chats
