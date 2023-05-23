@@ -84,6 +84,9 @@ const Profile = () => {
 
       // Fetch user data again after successful email update
       fetchUserData(user.uid);
+
+      setCurrentPasswordForEmail("");
+      setNewEmail("");
     } catch (error) {
       console.error("Error updating email:", error);
     }
@@ -113,6 +116,10 @@ const Profile = () => {
 
       // Fetch user data again after successful password update
       fetchUserData(user.uid);
+
+      setCurrentPasswordForPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
     } catch (error) {
       console.error("Error updating password:", error);
     }
