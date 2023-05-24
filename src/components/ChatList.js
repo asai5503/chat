@@ -149,22 +149,25 @@ function ChatList({ currentUser }) {
         // Retrieve selected friend's document
         const friendDocSnapshot1 = await transaction.get(friendDoc);
 
-        // If 'private.rooms' field doesn't exist, initialize it
-        let currentUserRooms =
-          currentUserDocSnapshot.data().private.rooms || [];
-        currentUserRooms.push(docRef.id);
+        // If 'private.directRoom' field doesn't exist, initialize it
+        let currentUserDirectRoom =
+          currentUserDocSnapshot.data().private.directRoom || [];
+        currentUserDirectRoom.push(docRef.id);
 
-        // If 'private.rooms' field doesn't exist, initialize it
-        let friendRooms = friendDocSnapshot1.data().private.rooms || [];
-        friendRooms.push(docRef.id);
+        // If 'private.directRoom' field doesn't exist, initialize it
+        let friendDirectRoom =
+          friendDocSnapshot1.data().private.directRoom || [];
+        friendDirectRoom.push(docRef.id);
 
-        // Update 'rooms' in currentUser's document
+        // Update 'directRoom' in currentUser's document
         transaction.update(currentUserDoc, {
-          "private.rooms": currentUserRooms,
+          "private.directRoom": currentUserDirectRoom,
         });
 
-        // Update 'rooms' in selected friend's document
-        transaction.update(friendDoc, { "private.rooms": friendRooms });
+        // Update 'directRoom' in selected friend's document
+        transaction.update(friendDoc, {
+          "private.directRoom": friendDirectRoom,
+        });
 
         // Retrieve friend data to update chats
         const friendDocSnapshot2 = await getDoc(friendDoc);
@@ -210,18 +213,30 @@ function ChatList({ currentUser }) {
         const currentUserDoc = doc(db, "users", currentUser.uid);
         const currentUserDocSnapshot = await transaction.get(currentUserDoc);
 
-        // If 'private.rooms' field doesn't exist, initialize it
-        let currentUserRooms =
-          currentUserDocSnapshot.data().private.rooms || [];
+        // Retrieve friend's document
+        const friendDoc = doc(db, "users", friendId);
+        const friendDocSnapshot = await transaction.get(friendDoc);
 
-        // Filter out the deleted room from currentUserRooms
-        currentUserRooms = currentUserRooms.filter(
+        // If 'private.directRoom' field doesn't exist, initialize it
+        let currentUserDirectRooms =
+          currentUserDocSnapshot.data().private.directRoom || [];
+        let friendDirectRooms =
+          friendDocSnapshot.data().private.directRoom || [];
+
+        // Filter out the deleted chat from currentUserDirectRooms and friendDirectRooms
+        currentUserDirectRooms = currentUserDirectRooms.filter(
+          (roomId) => roomId !== chatId
+        );
+        friendDirectRooms = friendDirectRooms.filter(
           (roomId) => roomId !== chatId
         );
 
-        // Update 'rooms' in currentUser's document
+        // Update 'private.directRoom' in currentUser's and friend's document
         transaction.update(currentUserDoc, {
-          "private.rooms": currentUserRooms,
+          "private.directRoom": currentUserDirectRooms,
+        });
+        transaction.update(friendDoc, {
+          "private.directRoom": friendDirectRooms,
         });
       });
 
@@ -445,9 +460,7 @@ function ChatList({ currentUser }) {
                   alt={room.name}
                   style={{ width: "50px", height: "50px" }}
                 />
-
                 <Link to={`/room/${room.id}`}>{room.name}</Link>
-
                 <button onClick={() => deleteRoom(room.id)}>Delete Room</button>
               </li>
             )

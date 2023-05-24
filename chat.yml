@@ -4,11 +4,9 @@ users:
   iconUrl: string
   private: {
     friends: [string] #userId
-    rooms: [string] #directRoomId or roomId
+    directRoom: [string] #directRoomId
+    rooms: [string] #roomId
     blockedUser: [string] #userId
-    unreadCounts: {
-      [roomId: string] :number #roomId
-    }
   }
   createdAt: timestamp
   updatedAt: timestamp
